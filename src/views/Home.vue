@@ -1,18 +1,81 @@
 <template>
-  <div class="home">
-    <img alt="Vue logo" src="../assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
-  </div>
+  <section>
+    <div v-for="smoothie in smoothies" :key="smoothie.id" class="card">
+      <div class="card-content">
+        <i @click="deleteSmoothie(smoothie.id)" class="material-icons delete">delete</i>
+        <h2 class="indigo-text">{{ smoothie.title }}</h2>
+        <ul class="ingredients">
+          <li v-for="(ing, index) in smoothie.ingredients" :key="index">
+            <span class="chip">{{ ing }}</span>
+          </li>
+        </ul>
+      </div>
+      <span class="btn-floating btn-large halfway-fab pink">
+        <router-link :to="{ name: 'EditSmoothie', params: { smoothie_slug: smoothie.slug }}">
+          <i class="material-icons edit">edit</i>
+        </router-link>
+      </span>
+    </div>
+  </section>
 </template>
 
 <script>
-// @ is an alias to /src
-import HelloWorld from '@/components/HelloWorld.vue'
+import db from "@/firebase/init"
 
 export default {
-  name: 'home',
-  components: {
-    HelloWorld
+  name: "Home",
+  data() { return {
+    smoothies: [],
+  }},
+  methods: {
+    deleteSmoothie(id) {
+      // Delete doc from firestore
+      db.collection("smoothies").doc(id).delete()
+        .then(() => {
+      this.smoothies = this.smoothies.filter(smoothie => {
+        return smoothie.id !== id
+      })
+        })
+
+    }
+  },
+  created() {
+    db.collection("smoothies").get()
+      .then(snapshot => {
+        snapshot.forEach(doc => {
+          let smoothie = doc.data()
+          smoothie.id = doc.id
+          this.smoothies.push(smoothie)
+        });
+      })
   }
 }
 </script>
+
+<style lang="scss" scoped>
+  section {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-gap: 2em;
+    margin-top: 4em;
+    .delete {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      cursor: pointer;
+      color: #aaa;
+      font-size: 1.4em;
+    }
+    h2 {
+      font-size: 1.8em;
+      text-align: center;
+      margin-top: 0;
+    }
+    ul {
+      margin: 2em auto;
+      li {
+        display: inline-block;
+      }
+    }
+  }
+</style>
